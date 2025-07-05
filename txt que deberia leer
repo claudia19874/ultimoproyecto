@@ -1,7 +1,10 @@
 /
   documentos/
-    tarea1.txt:Contenido de la tarea 1
-    tarea2.txt:Contenido de la tarea 2
+    proyectos/
+      proyecto1.txt:Este es el contenido del primer proyecto
+    notas.txt:Notas importantes aquí
   descargas/
   musica/
-    cancion1.mp3
+    rock/
+      cancion1.mp3
+    pop/
