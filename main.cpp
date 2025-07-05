@@ -49,3 +49,15 @@ Directory* createDirectory(const char* name, Directory* parent = nullptr) {
     
     return newDir;
 }
+
+//encontrar archivo en un directorio
+File* findFile(Directory* dir, const char* name) {
+    File* current = dir->files;
+    while (current) {
+        if (strcmp(current->name, name) == 0) {
+            return current;
+        }
+        current = current->next;
+    }
+    return nullptr;
+}
