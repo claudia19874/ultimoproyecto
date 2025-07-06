@@ -50,6 +50,42 @@ Directory* createDirectory(const char* name, Directory* parent = nullptr) {
     return newDir;
 }
 
+// Función para liberar memoria de un archivo
+void deleteFile(File* file) {
+    if (file) {
+        delete[] file->name;
+        if (file->content) delete[] file->content;
+        delete file;
+    }
+}
+
+// Función para liberar memoria de un directorio y su contenido
+void deleteDirectory(Directory* dir) {
+    if (dir) {
+        delete[] dir->name;
+        
+        // Eliminar subdirectorios
+        Directory* currentChild = dir->childDir;
+        while (currentChild) {
+            Directory* nextChild = currentChild->nextDir;
+            deleteDirectory(currentChild);
+            currentChild = nextChild;
+        }
+        
+        // Eliminar archivos
+        File* currentFile = dir->files;
+        while (currentFile) {
+            File* nextFile = currentFile->next;
+            deleteFile(currentFile);
+            currentFile = nextFile;
+        }
+        
+        delete dir;
+    }
+}
+
+
+
 //encontrar archivo en un directorio
 File* findFile(Directory* dir, const char* name) {
     File* current = dir->files;
