@@ -85,7 +85,6 @@ void deleteDirectory(Directory* dir) {
 }
 
 
-
 //encontrar archivo en un directorio
 File* findFile(Directory* dir, const char* name) {
     File* current = dir->files;
@@ -94,6 +93,19 @@ File* findFile(Directory* dir, const char* name) {
             return current;
         }
         current = current->next;
+    }
+    return nullptr;
+}
+
+
+// Función para buscar un subdirectorio
+Directory* findDirectory(Directory* dir, const char* name) {
+    Directory* current = dir->childDir;
+    while (current) {
+        if (strcmp(current->name, name) == 0) {
+            return current;
+        }
+        current = current->nextDir;
     }
     return nullptr;
 }
