@@ -123,3 +123,24 @@ void addFile(Directory* dir, File* file) {
     }
     file->next = nullptr;
 }
+
+// Función para eliminar un archivo de un directorio
+bool removeFile(Directory* dir, const char* name) {
+    File* current = dir->files;
+    File* prev = nullptr;
+    
+    while (current) {
+        if (strcmp(current->name, name) == 0) {
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                dir->files = current->next;
+            }
+            deleteFile(current);
+            return true;
+        }
+        prev = current;
+        current = current->next;
+    }
+    return false;
+}
