@@ -109,3 +109,17 @@ Directory* findDirectory(Directory* dir, const char* name) {
     }
     return nullptr;
 }
+
+// Función para añadir un archivo a un directorio
+void addFile(Directory* dir, File* file) {
+    if (dir->files == nullptr) {
+        dir->files = file;
+    } else {
+        File* last = dir->files;
+        while (last->next) {
+            last = last->next;
+        }
+        last->next = file;
+    }
+    file->next = nullptr;
+}
