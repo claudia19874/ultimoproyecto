@@ -144,3 +144,24 @@ bool removeFile(Directory* dir, const char* name) {
     }
     return false;
 }
+
+// Función para eliminar un subdirectorio
+bool removeDirectory(Directory* parent, const char* name) {
+    Directory* current = parent->childDir;
+    Directory* prev = nullptr;
+    
+    while (current) {
+        if (strcmp(current->name, name) == 0) {
+            if (prev) {
+                prev->nextDir = current->nextDir;
+            } else {
+                parent->childDir = current->nextDir;
+            }
+            deleteDirectory(current);
+            return true;
+        }
+        prev = current;
+        current = current->nextDir;
+    }
+    return false;
+}
