@@ -611,7 +611,7 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
     return raiz;
 }
 
-// --- Bucle Principal de la Terminal ---
+//  Bucle Principal de la Terminal 
 
 void procesarComando(char* lineaComando, Directorio*& directorioActual, Directorio* raiz) {
     char* token = strtok(lineaComando, " ");
@@ -729,3 +729,4 @@ int main() {
 
     return 0;
 }
+//balatro 
