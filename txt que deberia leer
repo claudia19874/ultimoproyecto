@@ -1,10 +1,8 @@
-/
-  documentos/
-    proyectos/
-      proyecto1.txt:Este es el contenido del primer proyecto
-    notas.txt:Notas importantes aquí
-  descargas/
-  musica/
-    rock/
-      cancion1.mp3
-    pop/
+DIR /home
+DIR /home/user
+FILE /home/user/notes.txt Hola bro Esto es una nota.
+DIR /home/user/documents
+FILE /home/user/documents/report.txt Contenido del informe.
+DIR /etc
+FILE /etc/hosts 127.0.0.1 localhost
+FILE /etc/passwd usuario:x:1000:1000::/home/user:/bin/bash
