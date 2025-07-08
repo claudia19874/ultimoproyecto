@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <limits> // Para std::numeric_limits
+#include <limits> //
 
 using namespace std;
 
