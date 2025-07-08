@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <cstring> 
+#include <cstring>
+#include <limits> // Para std::numeric_limits
 
 using namespace std;
 
@@ -10,17 +11,17 @@ const int LONGITUD_MAX_CONTENIDO = 4096; // Para el editor de texto y contenido 
 
 // Estructura para Archivos
 struct Archivo {
-    char* nombre;     // Nombre del archivo
-    char* contenido;  // Contenido del archivo
-    Archivo* siguiente;     // Puntero al siguiente archivo en la lista del directorio
+    char* nombre;       // Nombre del archivo
+    char* contenido;    // Contenido del archivo
+    Archivo* siguiente;       // Puntero al siguiente archivo en la lista del directorio
 };
 
 // Estructura para Directorios
 struct Directorio {
-    char* nombre;             // Nombre del directorio
+    char* nombre;            // Nombre del directorio
     Directorio* padre;      // Directorio padre
-    Directorio* subdirectorios;    // Lista de subdirectorios (primer hijo)
-    Directorio* siguienteDirectorio;     // Siguiente hermano en la lista de subdirectorios del padre
+    Directorio* subdirectorios;     // Lista de subdirectorios (primer hijo)
+    Directorio* siguienteDirectorio;        // Siguiente hermano en la lista de subdirectorios del padre
     Archivo* archivos;            // Lista de archivos en este directorio (primer archivo)
 };
 
@@ -433,18 +434,18 @@ void comando_editar(Archivo* archivo) {
 
     // Limpiar el buffer de entrada antes de leer líneas
     cin.clear();
-    while (cin.peek() == '\n' || cin.peek() == ' ') {
-        cin.get();
-        if (cin.peek() == '\n') {
-            cin.get();
-        }
+    // Consumir cualquier caracter de nueva línea pendiente
+    if (cin.peek() == '\n') {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
+
 
     while (cin.getline(bufferLinea, sizeof(bufferLinea))) {
         if (strlen(bufferLinea) == 0) {
             break;
         }
         
+        // Verificar si hay espacio suficiente antes de concatenar
         if (longitudActual + strlen(bufferLinea) + 1 + 1 > sizeof(bufferNuevoContenido)) {
             cout << "Advertencia: Contenido demasiado largo, se truncará." << endl;
             break;
@@ -458,6 +459,12 @@ void comando_editar(Archivo* archivo) {
         delete[] archivo->contenido;
     }
     if (longitudActual > 0) {
+        // Asegúrate de que el último caracter no sea un salto de línea si el usuario terminó con una línea vacía
+        // Y el bufferNuevoContenido ya tiene un '\n' adicional del strcat, ajustamos
+        if (bufferNuevoContenido[longitudActual-1] == '\n' && longitudActual > 0) {
+            bufferNuevoContenido[longitudActual-1] = '\0'; // Elimina el último salto de línea
+            longitudActual--;
+        }
         archivo->contenido = new char[longitudActual + 1];
         strcpy(archivo->contenido, bufferNuevoContenido);
     } else {
@@ -525,7 +532,12 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
         char comando[5];
         char bufferRutaStr[LONGITUD_MAX_RUTA];
         
-        if (sscanf(bufferLinea, "%s %s", comando, bufferRutaStr) < 2) {
+        // Usar sscanf_s para mayor seguridad en Windows, si no, sscanf normal
+        #ifdef _MSC_VER
+            if (sscanf_s(bufferLinea, "%s %s", comando, (unsigned int)sizeof(comando), bufferRutaStr, (unsigned int)sizeof(bufferRutaStr)) < 2) {
+        #else
+            if (sscanf(bufferLinea, "%s %s", comando, bufferRutaStr) < 2) {
+        #endif
             cerr << "Advertencia: Línea mal formada en el archivo de configuración: " << bufferLinea << endl;
             continue;
         }
@@ -533,16 +545,16 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
         if (strcmp(comando, "DIR") == 0) {
             char* ultimaBarra = strrchr(bufferRutaStr, '/');
             if (ultimaBarra == nullptr) {
-                 cerr << "Advertencia: Formato de ruta DIR inválido: " << bufferRutaStr << endl;
-                 continue;
+                    cerr << "Advertencia: Formato de ruta DIR inválido: " << bufferRutaStr << endl;
+                    continue;
             }
             
             char nombreDir[100];
             strcpy(nombreDir, ultimaBarra + 1);
-            *ultimaBarra = '\0';
+            *ultimaBarra = '\0'; // Corta la ruta para obtener solo el padre
 
             char rutaPadre[LONGITUD_MAX_RUTA];
-            if (strlen(bufferRutaStr) == 0) {
+            if (strlen(bufferRutaStr) == 0) { // Si la ruta original era solo "/nombre", padre es "/"
                 strcpy(rutaPadre, "/");
             } else {
                 strcpy(rutaPadre, bufferRutaStr);
@@ -571,10 +583,10 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
             }
             char nombreArchivo[100];
             strcpy(nombreArchivo, ultimaBarra + 1);
-            *ultimaBarra = '\0';
+            *ultimaBarra = '\0'; // Corta la ruta para obtener solo el padre
 
             char rutaPadre[LONGITUD_MAX_RUTA];
-            if (strlen(bufferRutaStr) == 0) {
+            if (strlen(bufferRutaStr) == 0) { // Si la ruta original era solo "/nombre", padre es "/"
                 strcpy(rutaPadre, "/");
             } else {
                 strcpy(rutaPadre, bufferRutaStr);
@@ -582,8 +594,8 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
 
             char* inicioContenido = strstr(bufferLinea, bufferRutaStr);
             if (inicioContenido) {
-                inicioContenido += strlen(bufferRutaStr);
-                while (*inicioContenido == ' ') inicioContenido++; 
+                inicioContenido += strlen(bufferRutaStr); // Mueve el puntero después de la ruta
+                while (*inicioContenido == ' ') inicioContenido++; // Ignora espacios en blanco
             }
             
             const char* contenido = (inicioContenido && *inicioContenido != '\0') ? inicioContenido : nullptr;
@@ -611,9 +623,111 @@ Directorio* cargarSistemaArchivos(const char* nombreArchivo, Directorio*& raiz) 
     return raiz;
 }
 
-//  Bucle Principal de la Terminal 
+// --- ESTRUCTURA DE PILA MANUAL ---
+// Definimos una estructura para cada elemento de nuestra pila
+struct StackNode {
+    Directorio* dir;
+    char* path; // Ruta completa hasta este directorio
+};
 
-void procesarComando(char* lineaComando, Directorio*& directorioActual, Directorio* raiz) {
+// Una pila simple implementada con un array dinámico
+const int MAX_STACK_SIZE = 1000; // Un tamaño máximo razonable para la pila
+StackNode customStack[MAX_STACK_SIZE];
+int stackTop = -1; // Índice del tope de la pila, -1 indica vacía
+
+void push(Directorio* d, char* p) {
+    if (stackTop < MAX_STACK_SIZE - 1) {
+        stackTop++;
+        customStack[stackTop].dir = d;
+        customStack[stackTop].path = p;
+    } else {
+        cerr << "Error: Desbordamiento de pila en guardarSistemaArchivos." << endl;
+        // Considerar manejo de errores o redimensionamiento del array
+    }
+}
+
+StackNode pop() {
+    if (stackTop >= 0) {
+        return customStack[stackTop--];
+    }
+    // Deberías manejar este caso de error si la pila está vacía y se intenta pop
+    // Para este contexto, se asume que solo se llama pop si la pila no está vacía
+    return {nullptr, nullptr}; 
+}
+
+bool isEmpty() {
+    return stackTop == -1;
+}
+
+// --- FIN ESTRUCTURA DE PILA MANUAL ---
+
+// Función para guardar el sistema de archivos a un archivo de texto
+void guardarSistemaArchivos(const char* nombreArchivo, Directorio* raiz) {
+    ofstream archivoSalida(nombreArchivo);
+    if (!archivoSalida.is_open()) {
+        cerr << "Error: No se pudo abrir el archivo para guardar el sistema de archivos: " << nombreArchivo << endl;
+        return;
+    }
+
+    // Reiniciar la pila para un nuevo guardado
+    stackTop = -1; 
+    char* rutaRaiz = new char[2]; // Asignar dinámicamente para la raíz también
+    strcpy(rutaRaiz, "/");
+    push(raiz, rutaRaiz); // Empieza el recorrido desde la raíz
+
+    while (!isEmpty()) { // Mientras haya elementos en la pila, sigue recorriendo
+        StackNode currentNode = pop(); // Obtiene el elemento del tope
+        Directorio* actualDir = currentNode.dir;
+        char* rutaActual = currentNode.path;
+        
+        // Guardar directorios
+        Directorio* subDir = actualDir->subdirectorios;
+        while (subDir) {
+            char nuevaRuta[LONGITUD_MAX_RUTA];
+            if (strcmp(rutaActual, "/") == 0) {
+                snprintf(nuevaRuta, LONGITUD_MAX_RUTA, "/%s", subDir->nombre);
+            } else {
+                snprintf(nuevaRuta, LONGITUD_MAX_RUTA, "%s/%s", rutaActual, subDir->nombre);
+            }
+            archivoSalida << "DIR " << nuevaRuta << endl;
+            
+            // Crea una copia dinámica de la ruta para el elemento de la pila
+            char* rutaParaPila = new char[strlen(nuevaRuta) + 1];
+            strcpy(rutaParaPila, nuevaRuta);
+            push(subDir, rutaParaPila); // Agrega el subdirectorio a la pila para visitarlo luego
+            subDir = subDir->siguienteDirectorio;
+        }
+
+        // Guardar archivos
+        Archivo* file = actualDir->archivos;
+        while (file) {
+            char rutaCompletaArchivo[LONGITUD_MAX_RUTA];
+            if (strcmp(rutaActual, "/") == 0) {
+                snprintf(rutaCompletaArchivo, LONGITUD_MAX_RUTA, "/%s", file->nombre);
+            } else {
+                snprintf(rutaCompletaArchivo, LONGITUD_MAX_RUTA, "%s/%s", rutaActual, file->nombre);
+            }
+
+            archivoSalida << "FILE " << rutaCompletaArchivo;
+            if (file->contenido) {
+                archivoSalida << " " << file->contenido;
+            }
+            archivoSalida << endl;
+            file = file->siguiente;
+        }
+
+        // Libera la memoria de la ruta que sacamos de la pila
+        delete[] rutaActual;
+    }
+
+    archivoSalida.close();
+    cout << "Sistema de archivos guardado en '" << nombreArchivo << "'." << endl;
+}
+
+
+// --- Bucle Principal de la Terminal ---
+
+void procesarComando(char* lineaComando, Directorio*& directorioActual, Directorio* raiz, const char* nombreArchivoGuardado) {
     char* token = strtok(lineaComando, " ");
 
     if (token == nullptr) return;
@@ -691,9 +805,14 @@ void procesarComando(char* lineaComando, Directorio*& directorioActual, Director
             cout << "Uso: renombrar <nombre_antiguo> <nombre_nuevo>" << endl;
         }
     }
+    else if (strcmp(token, "save") == 0) {
+        guardarSistemaArchivos(nombreArchivoGuardado, raiz);
+    }
     else if (strcmp(token, "exit") == 0) {
         cout << "Saliendo de la terminal." << endl;
-        exit(0); 
+        guardarSistemaArchivos(nombreArchivoGuardado, raiz); // Guardar antes de salir
+        eliminarDirectorio(raiz); // Liberar memoria al salir
+        exit(0);    
     }
     else {
         cout << lineaComando << ": comando no encontrado" << endl;
@@ -703,8 +822,9 @@ void procesarComando(char* lineaComando, Directorio*& directorioActual, Director
 int main() {
     Directorio* raiz = nullptr;
     Directorio* directorioActual = nullptr;
+    const char* nombreArchivoConfig = "filesystem.txt";
 
-    raiz = cargarSistemaArchivos("filesystem.txt", raiz);
+    raiz = cargarSistemaArchivos(nombreArchivoConfig, raiz);
 
     if (!raiz) {
         cerr << "Error al inicializar el sistema de archivos. Saliendo." << endl;
@@ -722,11 +842,9 @@ int main() {
         char copiaLineaComando[sizeof(lineaComando)];
         strcpy(copiaLineaComando, lineaComando);
 
-        procesarComando(copiaLineaComando, directorioActual, raiz);
+        procesarComando(copiaLineaComando, directorioActual, raiz, nombreArchivoConfig);
     }
-
-    eliminarDirectorio(raiz); // Liberar memoria al salir
 
     return 0;
 }
-//balatro 
+//balatro 2
