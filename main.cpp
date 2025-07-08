@@ -641,7 +641,7 @@ void push(Directorio* d, char* p) {
         customStack[stackTop].dir = d;
         customStack[stackTop].path = p;
     } else {
-        cerr << "Error: Desbordamiento de pila en guardarSistemaArchivos." << endl;
+        cout << "Error: Desbordamiento de pila en guardarSistemaArchivos." << endl;
         // Considerar manejo de errores o redimensionamiento del array
     }
 }
@@ -827,7 +827,7 @@ int main() {
     raiz = cargarSistemaArchivos(nombreArchivoConfig, raiz);
 
     if (!raiz) {
-        cerr << "Error al inicializar el sistema de archivos. Saliendo." << endl;
+        cout << "Error al inicializar el sistema de archivos. Saliendo." << endl;
         return 1;
     }
 
