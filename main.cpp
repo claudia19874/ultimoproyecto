@@ -822,7 +822,7 @@ void procesarComando(char* lineaComando, Directorio*& directorioActual, Director
 int main() {
     Directorio* raiz = nullptr;
     Directorio* directorioActual = nullptr;
-    const char* nombreArchivoConfig = "filesystem.txt";
+    const char* nombreArchivoConfig = "BalatroBalatrez.txt";
 
     raiz = cargarSistemaArchivos(nombreArchivoConfig, raiz);
 
